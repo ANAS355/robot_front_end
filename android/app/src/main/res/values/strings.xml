@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">خريطة اللاجئ</string>
+    <string name="title_activity_main">خريطة اللاجئ</string>
+    <string name="package_name">com.refugeemap.app</string>
+    <string name="custom_url_scheme">com.refugeemap.app</string>
+</resources>
