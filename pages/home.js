@@ -111,7 +111,10 @@ class User {
     this.isSignedIn = false
     this.isTryingToConnect = false
     this.socket = null
-
+    this.dataM1 = []
+    this.dataM2 = []
+    this.dataTime = 0
+    this.termenalIn = ""
   }
 
   handleConntion() {
@@ -338,7 +341,8 @@ class User {
       this.socket.send(JSON.stringify(data))
     } else {
       if (!this.isTryingToConnect){
-        this.connect()
+        //this.connect()
+        this.addSnackBar("No Connection", "error")
       }  
     }
   }
@@ -347,10 +351,15 @@ class User {
 const mdTheme = createTheme();
 
 export default function Main() {
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentpage, setCurrentpage] = useState("Home")
   const [lidarBitMap, setLidarBitMap] = useState()
   const [termenalOut, setTermenalOut] = useState("")
+  const [current, setCurrent] = useState({ x: "?", y: "?", v: "?", w: "?" })
+  const [target, setTarget] = useState({ x: 0, y: 0, v: 0, w: 0 })
+  const [dataM1, setDataM1] = useState([])
+  const [dataM2, setDataM2] = useState([])
+  const [timeStep, setTimeStep] = useState(0)
   const { enqueueSnackbar } = useSnackbar();
   const addSnackBar = (msg, variant) => {
     enqueueSnackbar(msg, { variant: variant });
@@ -358,6 +367,9 @@ export default function Main() {
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
   };
+  const createData = (time, amount) => {
+    return { time, amount };
+  }
   const handleServerResponse = (serverResponse) => {
     console.log(serverResponse)
     switch (serverResponse.function) {
@@ -379,14 +391,23 @@ export default function Main() {
       case "onTermenalCommand":
         setTermenalOut(serverResponse.data.exitCode)
         break;
-      case "onLidarResponse":
+      case "onSetTargetVelocity":
+        user.addSnackBar("V-SET done", "success")
+        break;
+      case "onUpdate":
         setLidarBitMap(serverResponse.data.lidar_bit_map)
+        if (dataM1.length > 100){
+          setDataM1(dataM1 => [...dataM1.slice(0).slice(-100), createData(serverResponse.data.time, serverResponse.data.M1.speed)])
+          setDataM2(dataM2 => [...dataM2.slice(0).slice(-100), createData(serverResponse.data.time, serverResponse.data.M2.speed)])
+        }else{
+        setDataM1(dataM1 => [...dataM1, createData(serverResponse.data.time, serverResponse.data.M1.speed)])
+        setDataM2(dataM2 => [...dataM2, createData(serverResponse.data.time, serverResponse.data.M2.speed)])}
+        setCurrent(serverResponse.data.R)
         break;
       default:
       // code block
     }
   }
-
   const [renderForce, setRenderForce] = useState(false)
   const forceRender = () => {
     setRenderForce(!renderForce)
@@ -402,13 +423,19 @@ export default function Main() {
     addSnackBar,
     lidarBitMap,
     termenalOut,
+    dataM1,
+    dataM2,
+    target,
+    setTarget,
+    current,
+    setCurrent,
   }
 
   const MINUTE_MS = 100;
 
   useEffect(() => {
     const interval = setInterval(() => {
-      user.send({function:"get_lidar_bit_map", data:{}})
+      user.send({function:"update", data:{}})
     }, MINUTE_MS);
 
     return () => clearInterval(interval); // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.

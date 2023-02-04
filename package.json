@@ -29,6 +29,7 @@
     "react": "latest",
     "react-dom": "latest",
     "react-hook-geolocation": "^1.1.0",
+    "recharts": "^2.3.2",
     "stylis": "^4.1.1"
   },
   "devDependencies": {
